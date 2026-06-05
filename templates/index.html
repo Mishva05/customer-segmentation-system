@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Segmentation System</title>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body{
+            background:#f5f7fa;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+        }
+
+        .container{
+            background:white;
+            padding:35px;
+            width:420px;
+            border-radius:12px;
+            box-shadow:0 8px 20px rgba(0,0,0,0.08);
+        }
+
+        h2{
+            text-align:center;
+            color:#2c3e50;
+            margin-bottom:25px;
+        }
+
+        label{
+            display:block;
+            margin-bottom:6px;
+            color:#555;
+            font-weight:600;
+        }
+
+        input{
+            width:100%;
+            padding:12px;
+            border:1px solid #dcdcdc;
+            border-radius:8px;
+            margin-bottom:18px;
+            font-size:15px;
+        }
+
+        input:focus{
+            outline:none;
+            border-color:#2563eb;
+        }
+
+        button{
+            width:100%;
+            padding:12px;
+            background:#2563eb;
+            color:white;
+            border:none;
+            border-radius:8px;
+            font-size:16px;
+            cursor:pointer;
+            transition:0.3s;
+        }
+
+        button:hover{
+            background:#1d4ed8;
+        }
+
+        .result-card{
+            margin-top:20px;
+            padding:15px;
+            border-radius:8px;
+            background:#eef4ff;
+            display:none;
+        }
+
+        .result-card h3{
+            color:#1d4ed8;
+            margin-bottom:8px;
+        }
+
+        .result-card p{
+            color:#444;
+            line-height:1.5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h2>Customer Segmentation</h2>
+
+    <label>Annual Income (k$)</label>
+    <input type="number" id="income" placeholder="Enter annual income">
+
+    <label>Spending Score (1-100)</label>
+    <input type="number" id="score" placeholder="Enter spending score">
+
+    <button onclick="predictCluster()">
+        Predict Segment
+    </button>
+
+    <div class="result-card" id="resultCard">
+        <h3 id="segmentTitle"></h3>
+        <p id="segmentDescription"></p>
+    </div>
+
+</div>
+
+<script>
+async function predictCluster() {
+
+    const income = document.getElementById("income").value;
+    const score = document.getElementById("score").value;
+
+    if(!income || !score){
+        alert("Please enter both values.");
+        return;
+    }
+
+    try{
+
+        const response = await fetch(
+            "http://localhost:5000/predict",
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+                    income:income,
+                    score:score
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        document.getElementById("resultCard").style.display = "block";
+
+        document.getElementById("segmentTitle").innerHTML =
+            data.segment;
+
+        let description = "";
+
+        switch(data.segment){
+
+            case "High Income - High Spending":
+                description = "Premium customers. Ideal target for luxury products and exclusive offers.";
+                break;
+
+            case "High Income - Low Spending":
+                description = "Customers have purchasing power but spend less. Marketing campaigns may increase engagement.";
+                break;
+
+            case "Low Income - High Spending":
+                description = "Highly engaged customers who respond well to promotions and loyalty programs.";
+                break;
+
+            case "Low Income - Low Spending":
+                description = "Budget-conscious customers who prefer value-based products and discounts.";
+                break;
+
+            default:
+                description = "Average customers with balanced spending behavior.";
+        }
+
+        document.getElementById("segmentDescription").innerHTML =
+            description;
+
+    }
+    catch(error){
+        alert("Unable to connect to the server.");
+        console.error(error);
+    }
+}
+</script>
+
+</body>
+</html>
